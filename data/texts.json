@@ -1,0 +1,11 @@
+{
+  "level1": [
+    "Text content for level 1 - example one.",
+    "Another example of level 1 text."
+  ],
+  "level2": ["Level 2 text content here.", "More examples of level 2 texts."],
+  "level3": [
+    "Level 3 text content example.",
+    "Additional level 3 text content."
+  ]
+}
