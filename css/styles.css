@@ -1,19 +1,40 @@
 body {
-  font-family: Arial, sans-serif;
-  margin: 20px;
+    font-family: Arial, sans-serif;
+    margin: 20px;
 }
 
-input,
-button {
-  margin: 10px 0;
+input, button {
+    margin: 10px 0;
 }
 
 #results {
-  margin-top: 20px;
+    margin-top: 20px;
 }
 
-#dataPreview {
-  margin-top: 20px;
-  font-style: italic;
-  color: gray;
+.level-1, .level-2, .level-2-5, .level-3 {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.level-1 {
+    background-color: #e0f7fa;
+}
+
+.level-2 {
+    background-color: #ffe0b2;
+}
+
+.level-2-5 {
+    background-color: #d1c4e9;
+}
+
+.level-3 {
+    background-color: #c8e6c9;
+}
+
+.highlight {
+    background-color: yellow;
+    color: red;
 }
