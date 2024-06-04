@@ -2,6 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fab379c5-5891-44a5-a640-6af08d1313be" name="变更" comment="">
+      <change afterPath="$PROJECT_DIR$/data/s2t.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/t2s.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/css/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/styles.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/texts.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/texts.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
@@ -44,7 +47,7 @@
       <option name="presentableId" value="Default" />
       <updated>1717403994551</updated>
       <workItem from="1717403996658" duration="50000" />
-      <workItem from="1717408138903" duration="636000" />
+      <workItem from="1717408138903" duration="4088000" />
     </task>
     <servers />
   </component>
