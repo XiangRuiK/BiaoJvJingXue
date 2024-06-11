@@ -1,12 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOMContentLoaded event fired."); // Debug line
-    fetch('data/texts.json')
-        .then(response => response.json())
-        .then(data => {
-            window.textData = data;
-            console.log("Loaded data:", data); // Debug line
-        })
-        .catch(error => console.error('Error loading texts.json:', error));
+    Promise.all([
+        fetch('data/sishu_final.json').then(response => response.json()),
+        fetch('data/zhuyu_final.json').then(response => response.json()),
+        fetch('data/xunyi_final.json').then(response => response.json())
+    ]).then(([sishuData, zhuyuData, xunyiData]) => {
+        window.sishuData = sishuData;
+        window.zhuyuData = zhuyuData;
+        window.xunyiData = xunyiData;
+        console.log("Loaded data:", { sishuData, zhuyuData, xunyiData }); // Debug line
+    }).catch(error => console.error('Error loading JSON files:', error));
 
     document.getElementById('searchInput').addEventListener('keydown', function(event) {
         if (event.key === 'Enter') {
@@ -18,15 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function highlightKeyword(text, keyword, originalKeyword) {
     const regex = new RegExp(`(${keyword}|${originalKeyword})`, 'gi');
     return text.replace(regex, '<span class="highlight">$1</span>');
-}
-
-function truncateText(text, keyword) {
-    const keywordIndex = text.toLowerCase().indexOf(keyword.toLowerCase());
-    if (keywordIndex === -1) return text;
-
-    const start = Math.max(0, keywordIndex - 40);
-    const end = Math.min(text.length, keywordIndex + keyword.length + 40);
-    return (start > 0 ? '...' : '') + text.slice(start, end) + (end < text.length ? '...' : '');
 }
 
 function searchText() {
@@ -50,61 +44,95 @@ function searchText() {
         const resultsDiv = document.getElementById('results');
         resultsDiv.innerHTML = '';
 
-        const results = {"level=1": [], "level=2": [], "level=2.5": [], "level=3": []};
+        const results = { sishu: [], xunyi: [], zhuyu: [] };
 
-        for (const level in window.textData) {
-            const texts = window.textData[level];
-            texts.forEach(item => {
-                const content = typeof item === 'string' ? item : item.内容;
-                if (content.includes(originalKeyword) || content.includes(traditionalKeyword) || content.includes(simplifiedKeyword)) {
-                    results[level].push(item);
+        // 搜索四书整理
+        const sishuGrouped = {};
+        window.sishuData.forEach(item => {
+            const { text, type, chapter_name, paragraph_number, sentence_number } = item;
+            if (text.includes(originalKeyword) || text.includes(traditionalKeyword) || text.includes(simplifiedKeyword)) {
+                const key = `${chapter_name}-${paragraph_number}-${sentence_number}`;
+                if (!sishuGrouped[key]) {
+                    sishuGrouped[key] = { chapter_name, paragraph_number, sentence_number, 经: '', 注: '' };
+                }
+                sishuGrouped[key][type] = text;
+            }
+        });
+
+        for (const key in sishuGrouped) {
+            const pair = sishuGrouped[key];
+            if (pair["经"] || pair["注"]) {
+                results.sishu.push(pair);
+            }
+        }
+
+        // 搜索训义整理
+        window.xunyiData.forEach(item => {
+            const { text, chapter_name } = item;
+            if (text.includes(originalKeyword) || text.includes(traditionalKeyword) || text.includes(simplifiedKeyword)) {
+                results.xunyi.push(item);
+            }
+        });
+
+        // 搜索朱子语类
+        window.zhuyuData.forEach(chapter => {
+            chapter.text.forEach(paragraph => {
+                if (paragraph.text.includes(originalKeyword) || paragraph.text.includes(traditionalKeyword) || paragraph.text.includes(simplifiedKeyword)) {
+                    results.zhuyu.push({ ...paragraph, chapter_name: chapter.章节名 });
                 }
             });
-        }
+        });
 
-        console.log("Search results:", results); // Debug line
-
-        if (results["level=1"].length > 0) {
-            results["level=1"].forEach(result => {
-                const resultElement = document.createElement('div');
-                resultElement.className = 'level-1';
-                resultElement.innerHTML = `<strong>经传注:</strong> ${highlightKeyword(result.内容, traditionalKeyword, originalKeyword)}`;
-                resultsDiv.appendChild(resultElement);
-            });
-        }
-
-        if (results["level=2"].length > 0) {
-            results["level=2"].forEach(result => {
-                const resultElement = document.createElement('div');
-                resultElement.className = 'level-2';
-                resultElement.innerHTML = `<strong>锡恭按 [${result.对应经文}]:</strong> ${highlightKeyword(result.内容, traditionalKeyword, originalKeyword)}`;
-                resultsDiv.appendChild(resultElement);
-            });
-        }
-
-        if (results["level=2.5"].length > 0) {
-            results["level=2.5"].forEach(result => {
-                const resultElement = document.createElement('div');
-                resultElement.className = 'level-2-5';
-                resultElement.innerHTML = `<strong>锡恭段内按 [${result.对应经文}]:</strong> ${highlightKeyword(result.内容, traditionalKeyword, originalKeyword)}`;
-                resultsDiv.appendChild(resultElement);
-            });
-        }
-
-        if (results["level=3"].length > 0) {
-            results["level=3"].forEach(result => {
-                const truncatedContent = truncateText(result.内容, originalKeyword);
-                const resultElement = document.createElement('div');
-                resultElement.className = 'level-3';
-                resultElement.innerHTML = `<strong>疏及其他 [${result.对应经文}]:</strong> ${highlightKeyword(truncatedContent, traditionalKeyword, originalKeyword)}`;
-                resultsDiv.appendChild(resultElement);
-            });
-        }
-
-        if (results["level=1"].length === 0 && results["level=2"].length === 0 && results["level=2.5"].length === 0 && results["level=3"].length === 0) {
-            resultsDiv.textContent = 'No results found.';
-        }
+        // 展示结果
+        displayResults(results, traditionalKeyword, originalKeyword);
     }).catch(error => {
         console.error('Error during conversion:', error);
     });
+}
+
+function displayResults(results, traditionalKeyword, originalKeyword) {
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = '';
+
+    // 展示四书整理结果
+    if (results.sishu.length > 0) {
+        const sishuDiv = document.createElement('div');
+        sishuDiv.className = 'level-1';
+        results.sishu.forEach(result => {
+            const resultElement = document.createElement('p');
+            const jingText = result["经"] ? `<span style="color:blue;">${highlightKeyword(result["经"], traditionalKeyword, originalKeyword)}</span>` : '';
+            const zhuText = result["注"] ? `<span style="color:green;">${highlightKeyword(result["注"], traditionalKeyword, originalKeyword)}</span>` : '';
+            resultElement.innerHTML = `<strong>【${result.chapter_name}】</strong> ${jingText} ${zhuText}`;
+            sishuDiv.appendChild(resultElement);
+        });
+        resultsDiv.appendChild(sishuDiv);
+    }
+
+    // 展示训义整理结果
+    if (results.xunyi.length > 0) {
+        const xunyiDiv = document.createElement('div');
+        xunyiDiv.className = 'level-2';
+        results.xunyi.forEach(result => {
+            const resultElement = document.createElement('p');
+            resultElement.innerHTML = `<strong>【${result.chapter_name}】</strong> ${highlightKeyword(result.text, traditionalKeyword, originalKeyword)}`;
+            xunyiDiv.appendChild(resultElement);
+        });
+        resultsDiv.appendChild(xunyiDiv);
+    }
+
+    // 展示朱子语类结果
+    if (results.zhuyu.length > 0) {
+        const zhuyuDiv = document.createElement('div');
+        zhuyuDiv.className = 'level-3';
+        results.zhuyu.forEach(result => {
+            const resultElement = document.createElement('p');
+            resultElement.innerHTML = `<strong>【${result.chapter_name}】</strong> ${highlightKeyword(result.text, traditionalKeyword, originalKeyword)}`;
+            zhuyuDiv.appendChild(resultElement);
+        });
+        resultsDiv.appendChild(zhuyuDiv);
+    }
+
+    if (results.sishu.length === 0 && results.xunyi.length === 0 && results.zhuyu.length === 0) {
+        resultsDiv.textContent = 'No results found.';
+    }
 }
